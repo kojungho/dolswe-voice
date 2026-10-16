@@ -1,0 +1,21 @@
+{
+  "version": "1.2.3",
+  "jvm_checks": 433,
+  "android_update_lifecycle_checks": 8,
+  "android_environment": "Android 37 ARM64 emulator, 16KB pages",
+  "verified": [
+    "Foreground resume performs real GitHub HTTPS metadata lookup",
+    "Disabled automatic updates do not check",
+    "Pausing before scheduled check cancels it",
+    "Rapid resume does not duplicate request",
+    "Later resume retries",
+    "Closed activity cannot launch check",
+    "Existing routing, lock, button, quiet hours, conversation and name-only reverse tests",
+    "Signed release APK verification"
+  ],
+  "limitations": [
+    "Physical Galaxy S25 Ultra was not available",
+    "Android installation confirmation still requires user action",
+    "Previous versions need one manual installation to receive foreground-check fix"
+  ]
+}
