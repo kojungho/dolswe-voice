@@ -1,0 +1,26 @@
+{
+  "version": "1.2.4",
+  "jvm_checks": 433,
+  "android_wifi_stability_checks": 14,
+  "concurrent_wifi_reads": 144138,
+  "real_wifi_refreshes": 500,
+  "false_disconnects": 0,
+  "microphone_continuity_seconds": 12,
+  "stability_report": "ANDROID_WIFI_STABILITY_OK 14 checks; 500 real refreshes / 144138 concurrent reads, zero false disconnects; 12-second microphone session continuity; unrelated loss, actual loss/recovery, wrong SSID, late callbacks",
+  "android_environment": "Android 37 ARM64 emulator, 16KB pages",
+  "verified": [
+    "Atomic completed connection decisions under concurrent reads",
+    "Actual Android Wi-Fi capabilities and SSID",
+    "Unrelated network loss does not invalidate home connection",
+    "Selected network loss immediately blocks and recovers",
+    "Different SSID denied; restoration accepted",
+    "Late callback cannot reopen stopped gate",
+    "Release APK signature verified"
+  ],
+  "limitations": [
+    "Physical Galaxy S25 Ultra not available",
+    "Emulator continuity test does not establish all-day or all-device reliability"
+  ],
+  "android_wifi_regression_checks": 18,
+  "regression_report": "ANDROID_WIFI_OK 18 checks; actual SSID=AndroidWifi; real microphone start/suspend/resume/stop; quiet-hours stop/start-denial/resume and stopped-service alarm; no HA service calls"
+}
