@@ -1,0 +1,108 @@
+{
+  "version": "1.1.4",
+  "core_checks_passed": 201,
+  "production_capture_native": {
+    "positive": 8,
+    "negative": 4,
+    "old_crop_misses": 4,
+    "cases": [
+      {
+        "file": "dolswe.wav",
+        "reset_pass": 0,
+        "text": "돌쇠야 거실 불 켜 줘.",
+        "wake": true,
+        "old_crop_text": "거실 불 켜 줘."
+      },
+      {
+        "file": "imonim.wav",
+        "reset_pass": 0,
+        "text": "이모님 안방 선풍기 꺼 죠.",
+        "wake": true,
+        "old_crop_text": "이모님 안강 선풍기 꺼 죠."
+      },
+      {
+        "file": "dolswe-slow.wav",
+        "reset_pass": 0,
+        "text": "돌 수야 거실 불 켜줘어.",
+        "wake": true,
+        "old_crop_text": "야 거실 불 켜줘."
+      },
+      {
+        "file": "imonim-slow.wav",
+        "reset_pass": 0,
+        "text": "이모님 안방 선풍기 꺼 주어.",
+        "wake": true,
+        "old_crop_text": "이모님 안방 선풍기 꺼 줘."
+      },
+      {
+        "file": "negative.wav",
+        "reset_pass": 0,
+        "text": "오늘 날씨 가 정말 좋 네요.",
+        "wake": false,
+        "old_crop_text": "늘날 가 정말 좋 네요."
+      },
+      {
+        "file": "negative-dolswe.wav",
+        "reset_pass": 0,
+        "text": "돌 스가 밥 을 먹 었 어요.",
+        "wake": false,
+        "old_crop_text": "스가 밥 을 먹 었 어요."
+      },
+      {
+        "file": "dolswe.wav",
+        "reset_pass": 1,
+        "text": "돌쇠야 거실 불 켜 줘.",
+        "wake": true,
+        "old_crop_text": "거실 불 켜 줘."
+      },
+      {
+        "file": "imonim.wav",
+        "reset_pass": 1,
+        "text": "이모님 안방 선풍기 꺼 죠.",
+        "wake": true,
+        "old_crop_text": "이모님 안강 선풍기 꺼 죠."
+      },
+      {
+        "file": "dolswe-slow.wav",
+        "reset_pass": 1,
+        "text": "돌 수야 거실 불 켜줘어.",
+        "wake": true,
+        "old_crop_text": "야 거실 불 켜줘."
+      },
+      {
+        "file": "imonim-slow.wav",
+        "reset_pass": 1,
+        "text": "이모님 안방 선풍기 꺼 주어.",
+        "wake": true,
+        "old_crop_text": "이모님 안방 선풍기 꺼 줘."
+      },
+      {
+        "file": "negative.wav",
+        "reset_pass": 1,
+        "text": "오늘 날씨 가 정말 좋 네요.",
+        "wake": false,
+        "old_crop_text": "늘날 가 정말 좋 네요."
+      },
+      {
+        "file": "negative-dolswe.wav",
+        "reset_pass": 1,
+        "text": "돌 스가 밥 을 먹 었 어요.",
+        "wake": false,
+        "old_crop_text": "스가 밥 을 먹 었 어요."
+      }
+    ]
+  },
+  "environment": "Android 37 ARM64 emulator, 16 KB pages",
+  "synthetic_audio_only": true,
+  "real_galaxy_tested": false,
+  "real_ha_device_control_tested": false,
+  "standalone_synthetic_characterization": {
+    "Yuna dolswe": "돌스야. (existing vowel correction matches)",
+    "Yuna imonim": "이모님. (matches)",
+    "Eddy dolswe": "同수呀. (does not match)",
+    "Eddy imonim": "에모. (does not match)"
+  },
+  "limits": "Pre-roll fixes reproducible VAD cropping regression. Does not establish real-user wake accuracy. Standalone ASR still varies by voice; user-reported 글쎄야/벌쎄야/벌 수야 are not accepted automatically.",
+  "sha256": "208967433cdd60903d85ae34c433157ab544ac867743b6eef5e77286261a749d",
+  "android_install_verified": true
+}
