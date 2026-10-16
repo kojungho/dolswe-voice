@@ -1,0 +1,28 @@
+{
+  "version": "1.2.2",
+  "versionCode": 13,
+  "existing_jvm_checks": 320,
+  "name_toggle_jvm_checks": 101,
+  "total_jvm_checks": 421,
+  "apk_build_signature_verified": true,
+  "real_galaxy_tested": false,
+  "real_ha_device_control_tested": false,
+  "tests": [
+    "fresh HA state on every name-only execution",
+    "lights/switches/fans/input_boolean on-off reversal",
+    "cover open-closed reversal",
+    "lock locked-unlocked reversal with original unlock opt-in and encrypted-code flow",
+    "climate off-active HVAC modes and media player off-active states",
+    "unknown/unavailable/moving/jammed states rejected",
+    "dry-run previews resolved action without service POST",
+    "label/group/home/quiet-hours permission gate unchanged",
+    "stateless button name presses once; sensor name reads state",
+    "strict bare-name detection and explicit action precedence",
+    "tail waiting for wake/device-only utterances during follow-up"
+  ],
+  "limits": [
+    "Service tail joining validated through its shared decision policy; no real microphone end-to-end name-only accuracy test",
+    "Integration-specific unsupported turn_on/turn_off actions remain HA errors"
+  ],
+  "sha256": "3c5d95fff4d681606ea6e9ae014c73801a2315b06671ad1a69c4da52b673afe5"
+}

@@ -59,15 +59,19 @@ public final class VoiceService extends Service {
   public void close(){collecting=false;queue.clear();try{record.stop();}catch(Exception ignored){}reader.interrupt();try{reader.join(1500);}catch(InterruptedException e){Thread.currentThread().interrupt();}}
  }
  private String joinWakeTail(String text,AudioPipe pipe,SpeechEngine engine)throws Exception{
-  CommandRouter.Wake wake=CommandRouter.wake(text,cfg.wakes(),cfg.p.getBoolean("nearWake",true));
-  if(mode.equals("test")||!wake.matched||!wake.remaining.isEmpty())return text;
-  // A short pause after the name must not cause our reply to cover the following command.
+  if(mode.equals("test"))return text;
+  if(!Conversation.awaitsTail(text,cfg.wakes(),cfg.p.getBoolean("nearWake",true),conversation.armed(SystemClock.elapsedRealtime()),cfg.targets()))return text;
+  // Wait after a bare device name so a following explicit action takes precedence.
   long quietDeadline=SystemClock.elapsedRealtime()+1200,hardDeadline=SystemClock.elapsedRealtime()+10000;
   while(active&&home.inside()&&SystemClock.elapsedRealtime()<hardDeadline){
-   float[] next=pipe.poll(100);if(next!=null){String tail=engine.recognize(next);if(tail.isEmpty())continue;CommandRouter.Wake second=CommandRouter.wake(tail,cfg.wakes(),cfg.p.getBoolean("nearWake",true));return second.matched?tail:text+" "+tail;}
+   float[] next=pipe.poll(100);if(next!=null){String tail=engine.recognize(next);if(tail.isEmpty())continue;CommandRouter.Wake second=CommandRouter.wake(tail,cfg.wakes(),cfg.p.getBoolean("nearWake",true));text=second.matched?tail:text+" "+tail;
+    if(!Conversation.awaitsTail(text,cfg.wakes(),cfg.p.getBoolean("nearWake",true),conversation.armed(SystemClock.elapsedRealtime()),cfg.targets()))return text;
+    quietDeadline=SystemClock.elapsedRealtime()+1200;
+   }
    if(SystemClock.elapsedRealtime()>quietDeadline&&!pipe.detecting)break;
   }return text;
  }
+
  private void listen(){SpeechEngine engine=null;AudioPipe pipe=null;try{while(active){
    if(!home.inside()){
     if(pipe!=null){pipe.close();pipe=null;}if(engine!=null){engine.close();engine=null;}releaseWake();conversation.clear();if(mode.equals("command"))mode="wake";publish(home.status());home.await();continue;

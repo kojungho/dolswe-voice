@@ -12,17 +12,20 @@ public final class CommandRouter {
   public String domain(){return id.split("\\.")[0];}
  }
  private static Set<String> names(Target target){Set<String> out=new LinkedHashSet<>();for(String alias:target.aliases){String name=compact(alias);if(name.length()<2)continue;out.add(name);String domain=target.domain();boolean lighting=domain.equals("light")||((domain.equals("switch")||domain.equals("input_boolean"))&&name.matches(".+(?:전등|조명|불|등)$"));if(lighting){String base=name.replaceFirst("(?:전등|조명|불|등)$","");if(!base.isEmpty())for(String suffix:new String[]{"불","등","전등","조명"})out.add(base+suffix);}}return out;}
+ public static boolean bareName(String text,List<Target> targets){String word=compact(text);for(Target target:targets)if(names(target).contains(word))return true;return false;}
  public static final class Plan {public final Target target;public final String service;public final Map<String,Object> data=new LinkedHashMap<>();Plan(Target t,String s){target=t;service=s;data.put("entity_id",t.id);}public boolean query(){return service.isEmpty();}}
  public static String validateAliases(List<Target> list){Map<String,String> owners=new HashMap<>();for(Target target:list){if(!target.configuredAliases.trim().isEmpty()&&target.aliases.isEmpty())return "쉼표 사이에 부를 이름을 입력해주세요.";if(target.aliases.size()>8)return "한 장치의 별칭은 8개까지 입력해주세요.";for(String alias:target.aliases){if(compact(alias).length()<2||alias.length()>40)return "별칭은 각각 2~40글자로 입력해주세요.";}for(String name:names(target)){String previous=owners.put(name,target.id);if(previous!=null&&!previous.equals(target.id))return "별칭 또는 불·등·조명으로 바꿔 부르는 이름이 겹칩니다: "+name+". 장치 이름을 더 구체적으로 입력해주세요.";}}return "";}
- public static String describe(Plan plan){switch(plan.service){case "":return "상태 조회";case "press":return "버튼 누르기";case "lock":return "잠금";case "unlock":return "잠금 해제";case "open_cover":return "열기";case "close_cover":return "닫기";case "stop_cover":return "중지";case "turn_on":return "켜기";case "turn_off":return "끄기";default:return "설정 변경";}}
+ public static String describe(Plan plan){switch(plan.service){case "":return "상태 조회";case "reverse":return "현재 상태 반대로 전환";case "press":return "버튼 누르기";case "lock":return "잠금";case "unlock":return "잠금 해제";case "open_cover":return "열기";case "close_cover":return "닫기";case "stop_cover":return "중지";case "turn_on":return "켜기";case "turn_off":return "끄기";default:return "설정 변경";}}
  public static Plan plan(String text,List<Target> targets){
   String s=compact(text);if(s.isEmpty())throw new IllegalArgumentException("명령을 다시 말씀해주세요.");
   if(s.matches(".*(하지마|하지말|켜지마|켜지말|끄지마|끄지말|열지마|열지말|닫지마|닫지말|안켜|안꺼|안열|안닫|잠그지마|잠그지말|잠가주지마|풀지마|풀지말|안잠가|안풀어|취소).*"))throw new IllegalArgumentException("취소했어요.");
   Map<String,Target> matches=new LinkedHashMap<>();int longest=0;for(Target target:targets)for(String name:names(target)){if(s.startsWith(name)){if(name.length()>longest){matches.clear();longest=name.length();}if(name.length()==longest)matches.put(target.id,target);}}
   if(matches.size()!=1)throw new IllegalArgumentException(matches.isEmpty()?"등록한 장치 별칭을 먼저 말씀해주세요.":"별칭이 겹칩니다. 장치 이름을 다르게 설정해주세요.");
   Target t=matches.values().iterator().next();String rest=s.substring(longest);for(Target other:targets)if(!other.id.equals(t.id))for(String name:names(other))if(rest.contains(name))throw new IllegalArgumentException("한 번에 한 장치씩 말씀해주세요.");
+  boolean bare=rest.isEmpty();
   rest=rest.replaceFirst("^(으로|에서|에게|은|는|이|가|을|를)","").replaceFirst("^(좀|한번만|한번)","");String d=t.domain();
   if(!DOMAINS.contains(d))throw new IllegalArgumentException("지원하지 않는 장치 종류입니다.");
+  if(bare){if(d.equals("button"))return new Plan(t,"press");if(d.equals("sensor")||d.equals("binary_sensor"))return new Plan(t,"");return new Plan(t,"reverse");}
   if(rest.matches("(상태|상태알려줘|상태알려주세요|어때|온도|온도알려줘|습도|습도알려줘|확인|확인해줘|몇도야|몇도|켜져있어|꺼져있어|열려있어|닫혀있어)[요까]*"))return new Plan(t,"");
   if(d.equals("button")){
    if(rest.matches("(?:버튼)?(눌러|눌러줘|눌러주세요|누르기|누름|누르세요|실행|실행해|실행해줘|실행해주세요|작동|작동시켜줘)[요]*"))return new Plan(t,"press");
@@ -43,6 +46,17 @@ public final class CommandRouter {
   Matcher temp=Pattern.compile("(?:온도)?(\\d{1,2})(?:도)(?:로)?(?:설정|맞춰|맞춰줘|해줘|해|설정해줘)?(?:요)?").matcher(rest);
   if(d.equals("climate")&&temp.matches()){int n=Integer.parseInt(temp.group(1));if(n<10||n>35)throw new IllegalArgumentException("온도는 10도에서 35도로 말씀해주세요.");Plan p=new Plan(t,"set_temperature");p.data.put("temperature",n);return p;}
   throw new IllegalArgumentException("별칭 뒤에 켜줘, 꺼줘, 상태 알려줘처럼 말씀해주세요.");
+ }
+ /** Resolve against a fresh HA state; never infer a direction from unknown or moving states. */
+ public static Plan resolveReverse(Plan plan,String state){
+  if(!plan.service.equals("reverse"))return plan;String domain=plan.target.domain(),action=null;
+  if(Arrays.asList("light","switch","input_boolean","fan").contains(domain)){if(state.equals("off"))action="turn_on";if(state.equals("on"))action="turn_off";}
+  else if(domain.equals("climate")){if(state.equals("off"))action="turn_on";if(Arrays.asList("heat","cool","heat_cool","auto","dry","fan_only").contains(state))action="turn_off";}
+  else if(domain.equals("media_player")){if(state.equals("off"))action="turn_on";if(Arrays.asList("on","idle","playing","paused","buffering").contains(state))action="turn_off";}
+  else if(domain.equals("cover")){if(state.equals("closed"))action="open_cover";if(state.equals("open"))action="close_cover";}
+  else if(domain.equals("lock")){if(state.equals("locked"))action="unlock";if(state.equals("unlocked"))action="lock";}
+  if(action==null)throw new IllegalArgumentException("현재 상태에서 반대 동작을 정할 수 없어요. 상태를 확인하고 동작을 직접 말씀해주세요.");
+  return new Plan(plan.target,action);
  }
  public static final class Wake {public final boolean matched;public final String remaining;Wake(boolean m,String s){matched=m;remaining=s;}}
  public static Wake wake(String text,String words){return wake(text,words,true);}
