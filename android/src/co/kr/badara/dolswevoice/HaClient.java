@@ -24,7 +24,7 @@ public final class HaClient {
   if(e.state.equals("unavailable")||e.state.equals("unknown"))throw new IOException("장치에 연결할 수 없어요.");
   if(!homeAllowed.getAsBoolean())throw new IOException("집 범위를 벗어나 명령을 중단했어요.");
   if(p.query()){if(p.target.domain().equals("climate")&&e.attributes.has("current_temperature"))return p.target.alias+"의 현재 온도는 "+e.attributes.optString("current_temperature")+"도예요.";String state=e.state;Map<String,String> names=new HashMap<>();names.put("on","켜짐");names.put("off","꺼짐");names.put("open","열림");names.put("closed","닫힘");names.put("locked","잠김");names.put("unlocked","잠금 해제");names.put("locking","잠그는 중");names.put("unlocking","잠금 해제 중");names.put("jammed","잠금장치 걸림");names.put("opening","문 여는 중");return p.target.alias+"은 "+names.getOrDefault(state,state)+(e.unit.isEmpty()?"":" "+e.unit)+" 상태예요.";}
-  if(dryRun)return "시험 모드: "+p.target.alias+"에 "+p.service+" 명령이 연결됐어요. 실제로 조작하지 않았어요.";
+  if(dryRun)return "시험 모드: "+p.target.alias+"에 "+CommandRouter.describe(p)+" 명령이 연결됐어요. 실제로 조작하지 않았어요.";
   if(p.data.containsKey("brightness_pct")&&(e.attributes.optInt("supported_color_modes",0)==0&&e.attributes.optJSONArray("supported_color_modes")!=null)){JSONArray modes=e.attributes.optJSONArray("supported_color_modes");if(modes.length()==1&&modes.optString(0).equals("onoff"))throw new IOException("이 조명은 밝기를 조절할 수 없어요.");}
   if(p.data.containsKey("temperature")){double n=((Number)p.data.get("temperature")).doubleValue();if(n<e.attributes.optDouble("min_temp",10)||n>e.attributes.optDouble("max_temp",35))throw new IOException("장치가 지원하는 온도 범위를 벗어났어요.");}
   if(!homeAllowed.getAsBoolean())throw new IOException("집 범위를 벗어나 명령을 중단했어요.");

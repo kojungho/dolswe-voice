@@ -1,0 +1,31 @@
+{
+  "version": "1.1.3",
+  "core_checks": 36,
+  "home_update_checks": 28,
+  "lock_checks": 47,
+  "short_command_checks": 34,
+  "connected_command_checks": 34,
+  "native_voice_probe_cases": [
+    {
+      "file": "fire.wav",
+      "transcript": "이모님 것 불 켜 줘.",
+      "wake": true,
+      "matched": false,
+      "detail": "등록한 장치 별칭을 먼저 말씀해주세요."
+    },
+    {
+      "file": "light.wav",
+      "transcript": "이모님 거실 등 켜줘.",
+      "wake": true,
+      "target": "light.living",
+      "service": "turn_on",
+      "matched": true
+    }
+  ],
+  "synthetic_voice_matches": 1,
+  "synthetic_voice_total": 2,
+  "synthetic_voice_limitation": "Yuna 150 WPM: 거실불 was transcribed as 것 불 and safely rejected; 거실등 resolved correctly. This is not a real Galaxy accuracy estimate.",
+  "android_install_verified": true,
+  "real_device_control_performed": false,
+  "sha256": "ea39a36bcbfc6fe2d021cfdcc898f932d0b9c743404d5944e71f98b9cc312d2e"
+}

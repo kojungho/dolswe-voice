@@ -6,16 +6,22 @@ import java.text.Normalizer;
 public final class CommandRouter {
  public static final Set<String> DOMAINS=new HashSet<>(Arrays.asList("light","switch","input_boolean","fan","cover","climate","media_player","sensor","binary_sensor","lock"));
  public static String compact(String s){return Normalizer.normalize(s==null?"":s,Normalizer.Form.NFKC).toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}%]","");}
- public static final class Target {public final String id,alias;public Target(String id,String alias){this.id=id;this.alias=alias;}public String domain(){return id.split("\\.")[0];}}
+ public static final class Target {
+  public final String id,alias,configuredAliases;public final List<String> aliases;
+  public Target(String id,String names){this.id=id;this.configuredAliases=names==null?"":names;List<String> values=new ArrayList<>();for(String name:(names==null?"":names).split("[,，\\n]+")){name=name.trim();if(!name.isEmpty())values.add(name);}aliases=Collections.unmodifiableList(values);alias=values.isEmpty()?"":values.get(0);}
+  public String domain(){return id.split("\\.")[0];}
+ }
+ private static Set<String> names(Target target){Set<String> out=new LinkedHashSet<>();for(String alias:target.aliases){String name=compact(alias);if(name.length()<2)continue;out.add(name);String domain=target.domain();boolean lighting=domain.equals("light")||((domain.equals("switch")||domain.equals("input_boolean"))&&name.matches(".+(?:전등|조명|불|등)$"));if(lighting){String base=name.replaceFirst("(?:전등|조명|불|등)$","");if(!base.isEmpty())for(String suffix:new String[]{"불","등","전등","조명"})out.add(base+suffix);}}return out;}
  public static final class Plan {public final Target target;public final String service;public final Map<String,Object> data=new LinkedHashMap<>();Plan(Target t,String s){target=t;service=s;data.put("entity_id",t.id);}public boolean query(){return service.isEmpty();}}
- public static String validateAliases(List<Target> list){Set<String> names=new HashSet<>();for(Target t:list){String n=compact(t.alias);if(n.isEmpty())continue;if(n.length()<2)return "별칭은 두 글자 이상 입력해주세요.";if(!names.add(n))return "같은 별칭을 두 장치에 사용할 수 없습니다: "+t.alias;}return "";}
+ public static String validateAliases(List<Target> list){Map<String,String> owners=new HashMap<>();for(Target target:list){if(!target.configuredAliases.trim().isEmpty()&&target.aliases.isEmpty())return "쉼표 사이에 부를 이름을 입력해주세요.";if(target.aliases.size()>8)return "한 장치의 별칭은 8개까지 입력해주세요.";for(String alias:target.aliases){if(compact(alias).length()<2||alias.length()>40)return "별칭은 각각 2~40글자로 입력해주세요.";}for(String name:names(target)){String previous=owners.put(name,target.id);if(previous!=null&&!previous.equals(target.id))return "별칭 또는 불·등·조명으로 바꿔 부르는 이름이 겹칩니다: "+name+". 장치 이름을 더 구체적으로 입력해주세요.";}}return "";}
+ public static String describe(Plan plan){switch(plan.service){case "":return "상태 조회";case "lock":return "잠금";case "unlock":return "잠금 해제";case "open_cover":return "열기";case "close_cover":return "닫기";case "stop_cover":return "중지";case "turn_on":return "켜기";case "turn_off":return "끄기";default:return "설정 변경";}}
  public static Plan plan(String text,List<Target> targets){
   String s=compact(text);if(s.isEmpty())throw new IllegalArgumentException("명령을 다시 말씀해주세요.");
   if(s.matches(".*(하지마|하지말|켜지마|켜지말|끄지마|끄지말|열지마|열지말|닫지마|닫지말|안켜|안꺼|안열|안닫|잠그지마|잠그지말|잠가주지마|풀지마|풀지말|안잠가|안풀어|취소).*"))throw new IllegalArgumentException("취소했어요.");
-  List<Target> matches=new ArrayList<>();int longest=0;for(Target t:targets){String name=compact(t.alias);if(name.length()<2)continue;if(s.startsWith(name)){if(name.length()>longest){matches.clear();longest=name.length();}if(name.length()==longest)matches.add(t);}}
+  Map<String,Target> matches=new LinkedHashMap<>();int longest=0;for(Target target:targets)for(String name:names(target)){if(s.startsWith(name)){if(name.length()>longest){matches.clear();longest=name.length();}if(name.length()==longest)matches.put(target.id,target);}}
   if(matches.size()!=1)throw new IllegalArgumentException(matches.isEmpty()?"등록한 장치 별칭을 먼저 말씀해주세요.":"별칭이 겹칩니다. 장치 이름을 다르게 설정해주세요.");
-  Target t=matches.get(0);String rest=s.substring(longest);for(Target other:targets)if(!other.id.equals(t.id)&&compact(other.alias).length()>1&&rest.contains(compact(other.alias)))throw new IllegalArgumentException("한 번에 한 장치씩 말씀해주세요.");
-  rest=rest.replaceFirst("^(으로|에서|에게|은|는|이|가|을|를)","");String d=t.domain();
+  Target t=matches.values().iterator().next();String rest=s.substring(longest);for(Target other:targets)if(!other.id.equals(t.id))for(String name:names(other))if(rest.contains(name))throw new IllegalArgumentException("한 번에 한 장치씩 말씀해주세요.");
+  rest=rest.replaceFirst("^(으로|에서|에게|은|는|이|가|을|를)","").replaceFirst("^(좀|한번만|한번)","");String d=t.domain();
   if(!DOMAINS.contains(d))throw new IllegalArgumentException("지원하지 않는 장치 종류입니다.");
   if(rest.matches("(상태|상태알려줘|상태알려주세요|어때|온도|온도알려줘|습도|습도알려줘|확인|확인해줘|몇도야|몇도|켜져있어|꺼져있어|열려있어|닫혀있어)[요까]*"))return new Plan(t,"");
   if(d.equals("lock")){
