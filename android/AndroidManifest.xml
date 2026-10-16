@@ -1,8 +1,10 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="co.kr.badara.dolswevoice" android:versionCode="4" android:versionName="1.0.3">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="co.kr.badara.dolswevoice" android:versionCode="5" android:versionName="1.1.0">
 <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="36"/>
 <uses-permission android:name="android.permission.INTERNET"/><uses-permission android:name="android.permission.RECORD_AUDIO"/><uses-permission android:name="android.permission.FOREGROUND_SERVICE"/><uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/><uses-permission android:name="android.permission.POST_NOTIFICATIONS"/><uses-permission android:name="android.permission.WAKE_LOCK"/>
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/><uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/><uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
 <application android:label="돌쇠 음성비서" android:icon="@drawable/voice_icon" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:allowBackup="false" android:usesCleartextTraffic="false" android:largeHeap="true" android:extractNativeLibs="true" android:supportsRtl="true">
 <activity android:name=".MainActivity" android:exported="true" android:windowSoftInputMode="adjustResize"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity>
-<service android:name=".VoiceService" android:foregroundServiceType="microphone" android:exported="false"/>
+<service android:name=".VoiceService" android:foregroundServiceType="microphone|location" android:exported="false"/>
+<activity android:name=".HomeMapActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/><provider android:name=".UpdateApkProvider" android:authorities="co.kr.badara.dolswevoice.updates" android:exported="false" android:grantUriPermissions="true"/>
 <receiver android:name=".StopReceiver" android:exported="false"/>
 </application><queries><intent><action android:name="android.intent.action.TTS_SERVICE"/></intent></queries></manifest>

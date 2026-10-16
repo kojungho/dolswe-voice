@@ -6,3 +6,5 @@
 - Kotlin standard library 2.2.20: https://kotlinlang.org/ (see licenses/kotlin-LICENSE.txt).
 
 The release APK contains model and runtime assets. The source ZIP does not contain these large third-party binaries; prepare-deps.py downloads the pinned versions and verifies their checksums.
+
+- Leaflet 1.9.4: https://leafletjs.com/ (BSD-2-Clause; see licenses/Leaflet-LICENSE.txt). Map tiles © OpenStreetMap contributors, https://www.openstreetmap.org/copyright. Tiles are requested only while viewing the map; no bulk or offline download.

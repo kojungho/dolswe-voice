@@ -1,0 +1,13 @@
+package co.kr.badara.dolswevoice;
+import org.json.*;import java.util.*;
+public class HomeUpdateTests {
+ static int n;static void ok(boolean b){n++;if(!b)throw new AssertionError("Check "+n);}interface Task{void run()throws Exception;}static void fails(Task t)throws Exception{boolean failed=false;try{t.run();}catch(Exception e){failed=true;}ok(failed);}
+ static String metadata(String version,long code,String url,String sha,long size)throws Exception{return new JSONObject().put("versionName",version).put("versionCode",code).put("apkUrl",url).put("sha256",sha).put("size",size).toString();}
+ public static void main(String[] args)throws Exception{
+  double lat=37.5,lon=127;ok(HomeRegion.valid(lat,lon,200));ok(!HomeRegion.valid(lat,lon,20));ok(!HomeRegion.valid(lat,lon,3001));ok(!HomeRegion.valid(100,lon,200));ok(!HomeRegion.valid(Double.NaN,lon,200));ok(HomeRegion.distance(lat,lon,lat,lon)<0.01);
+  ok(HomeRegion.inside(lat,lon,200,lat,lon,20,100));ok(!HomeRegion.inside(lat,lon,200,lat+0.01,lon,20,100));ok(!HomeRegion.inside(lat,lon,200,lat,lon,201,100));ok(!HomeRegion.inside(lat,lon,200,lat,lon,20,300001));ok(!HomeRegion.inside(lat,lon,200,lat,lon,20,-1));ok(!HomeRegion.inside(lat,lon,200,lat,lon,Float.NaN,100));ok(!HomeRegion.inside(lat,lon,200,lat,lon,-1,100));ok(!HomeRegion.inside(lat,lon,200,Double.NaN,lon,20,100));ok(HomeRegion.inside(lat,lon,200,lat+0.001,lon,20,300000));ok(!HomeRegion.inside(lat,lon,200,lat+0.0017,lon,25,100));
+  String url=UpdateSpec.REPOSITORY+"/releases/download/v1.1.0/dolswe-voice.apk",sha=String.join("",Collections.nCopies(64,"a"));UpdateSpec spec=new UpdateSpec(metadata("1.1.0",5,url,sha,250000000));ok(spec.code==5&&spec.sha.equals(sha));fails(()->new UpdateSpec(metadata("1.1.0",5,"http://example.com/app.apk",sha,250000000)));fails(()->new UpdateSpec(metadata("1.1.0",5,url+"?redirect=evil",sha,250000000)));fails(()->new UpdateSpec(metadata("1.1.0",5,url,"bad",250000000)));fails(()->new UpdateSpec(metadata("1.1.0",5,url,sha,600000000)));fails(()->new UpdateSpec(metadata("1.1.0",0,url,sha,250000000)));fails(()->new UpdateSpec(metadata("1.1.1",5,url,sha,250000000)));
+  CoreTests.Fixture f=new CoreTests.Fixture();HaClient client=new HaClient(f);CommandRouter.Plan plan=CommandRouter.plan("거실 불 켜줘",Arrays.asList(new CommandRouter.Target("light.living","거실 불")));fails(()->client.execute("음성제어",plan,false,()->false));ok(f.posts==0&&f.templates==0);final int[] checks={0};fails(()->client.execute("음성제어",plan,false,()->++checks[0]<3));ok(f.posts==0&&checks[0]==3);client.execute("음성제어",plan,false,()->true);ok(f.posts==1);
+  System.out.println(n+" checks passed: home radius, stale/inaccurate fixes, metadata boundaries, location recheck before HA command.");
+ }
+}

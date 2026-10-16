@@ -11,15 +11,19 @@ public final class HaClient {
   JSONArray a=new JSONArray(transport.request("POST","/api/template",new JSONObject().put("template",template)));Set<String> ids=new HashSet<>();for(int i=0;i<a.length();i++){String id=a.getString(i);if(id.matches("[a-z_]+\\.[a-z0-9_]+")&&CommandRouter.DOMAINS.contains(id.split("\\.")[0]))ids.add(id);}return ids;
  }
  public List<Entity> list(String label)throws Exception{Set<String> ids=allowed(label);List<Entity> out=new ArrayList<>();if(ids.isEmpty())return out;JSONArray a=new JSONArray(transport.request("GET","/api/states",null));for(int i=0;i<a.length();i++){JSONObject o=a.getJSONObject(i);if(ids.contains(o.optString("entity_id"))){Entity e=new Entity(o);JSONArray members=e.attributes.optJSONArray("entity_id");if(members==null||members.length()==0)out.add(e);}}out.sort(Comparator.comparing(e->e.name));return out;}
- public String execute(String label,CommandRouter.Plan p,boolean dryRun)throws Exception{
+ public String execute(String label,CommandRouter.Plan p,boolean dryRun)throws Exception{return execute(label,p,dryRun,()->true);}
+ public String execute(String label,CommandRouter.Plan p,boolean dryRun,java.util.function.BooleanSupplier homeAllowed)throws Exception{
+  if(!homeAllowed.getAsBoolean())throw new IOException("집 범위가 아니어서 명령을 중단했어요.");
   if(!allowed(label).contains(p.target.id))throw new IOException("레이블이 제거되었거나 허용되지 않은 장치입니다. 목록을 새로 불러오세요.");
   Entity e=new Entity(new JSONObject(transport.request("GET","/api/states/"+p.target.id,null)));
   JSONArray members=e.attributes.optJSONArray("entity_id");if(members!=null&&members.length()>0)throw new IOException("그룹 대신 레이블이 붙은 개별 장치를 선택해주세요.");
   if(e.state.equals("unavailable")||e.state.equals("unknown"))throw new IOException("장치에 연결할 수 없어요.");
+  if(!homeAllowed.getAsBoolean())throw new IOException("집 범위를 벗어나 명령을 중단했어요.");
   if(p.query()){if(p.target.domain().equals("climate")&&e.attributes.has("current_temperature"))return p.target.alias+"의 현재 온도는 "+e.attributes.optString("current_temperature")+"도예요.";String state=e.state;Map<String,String> names=new HashMap<>();names.put("on","켜짐");names.put("off","꺼짐");names.put("open","열림");names.put("closed","닫힘");return p.target.alias+"은 "+names.getOrDefault(state,state)+(e.unit.isEmpty()?"":" "+e.unit)+" 상태예요.";}
   if(dryRun)return "시험 모드: "+p.target.alias+"에 "+p.service+" 명령이 연결됐어요. 실제로 조작하지 않았어요.";
   if(p.data.containsKey("brightness_pct")&&(e.attributes.optInt("supported_color_modes",0)==0&&e.attributes.optJSONArray("supported_color_modes")!=null)){JSONArray modes=e.attributes.optJSONArray("supported_color_modes");if(modes.length()==1&&modes.optString(0).equals("onoff"))throw new IOException("이 조명은 밝기를 조절할 수 없어요.");}
   if(p.data.containsKey("temperature")){double n=((Number)p.data.get("temperature")).doubleValue();if(n<e.attributes.optDouble("min_temp",10)||n>e.attributes.optDouble("max_temp",35))throw new IOException("장치가 지원하는 온도 범위를 벗어났어요.");}
+  if(!homeAllowed.getAsBoolean())throw new IOException("집 범위를 벗어나 명령을 중단했어요.");
   transport.request("POST","/api/services/"+p.target.domain()+"/"+p.service,new JSONObject(p.data));
   return p.target.alias+"에 명령을 보냈어요.";
  }

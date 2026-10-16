@@ -59,6 +59,9 @@ if not all((models / name).exists() and digest(models / name) == sha for name, s
                 shutil.copyfileobj(incoming, outgoing)
             if digest(models / name) != sha:
                 raise SystemExit('Model checksum mismatch: ' + name)
+(assets / 'map').mkdir(exist_ok=True)
+for name, spec in config.get('map', {}).items():
+    download(spec['url'], assets / 'map' / name, spec['sha256'])
 for path in (source / 'licenses').glob('*'):
     shutil.copyfile(path, assets / 'licenses' / path.name)
 print('Ready. VOICE_DEPS_DIR=' + str(deps))

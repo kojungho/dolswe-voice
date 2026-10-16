@@ -1,0 +1,15 @@
+{
+  "version": "1.1.0",
+  "core_checks_passed": 36,
+  "home_update_logic_checks_passed": 28,
+  "android_location_and_update_checks_passed": 8,
+  "android_test_output": "ANDROID_HOME_UPDATE_OK 8 checks: mock home enter/exit, gate disabled, matching APK signer, rejected version mismatch\n",
+  "environment": "Android 37 ARM64 16KB emulator",
+  "microphone_inside_home_active_verified": true,
+  "microphone_outside_home_released_verified": true,
+  "real_s25_ultra_tested": false,
+  "real_battery_usage_measured": false,
+  "map_visual_device_tested": false,
+  "previous_s25_install_error_root_cause_confirmed": false,
+  "sha256": "4ba17d72244849c6254ec31995ff45c9fe58094f13189a67e80c5a29210cc62b"
+}
