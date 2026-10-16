@@ -6,6 +6,7 @@ public final class SpeechCapture implements AutoCloseable {
  public SpeechCapture(AssetManager assets){vad=SpeechEngine.createVad(assets);}
  public void accept(float[] samples){history.append(samples);vad.acceptWaveform(samples);}
  public float[] poll(){if(vad.empty())return null;SpeechSegment segment=vad.front();float[] samples=segment.getSamples();float[] result=samples.length<3200?new float[0]:history.segment(segment.getStart(),samples);vad.pop();return result;}
+ public boolean detecting(){return vad.isSpeechDetected();}
  public void reset(){vad.reset();history.reset();}
  public void close(){vad.release();}
 }

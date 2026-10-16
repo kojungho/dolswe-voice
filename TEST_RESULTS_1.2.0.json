@@ -1,0 +1,122 @@
+{
+  "version": "1.2.0",
+  "versionCode": 11,
+  "existing_jvm_checks": 250,
+  "wifi_conversation_jvm_checks": 36,
+  "jvm_checks_total": 286,
+  "android_wifi_checks": 13,
+  "android_wifi_output": "ANDROID_WIFI_OK 13 checks; actual SSID=AndroidWifi; real microphone start/suspend/resume/stop; no HA service calls",
+  "production_capture_native": {
+    "positive": 8,
+    "negative": 4,
+    "old_crop_misses": 4,
+    "cases": [
+      {
+        "file": "dolswe.wav",
+        "reset_pass": 0,
+        "text": "돌쇠야 거실 불 켜 줘.",
+        "wake": true,
+        "old_crop_text": "거실 불 켜 줘."
+      },
+      {
+        "file": "imonim.wav",
+        "reset_pass": 0,
+        "text": "이모님 안방 선풍기 꺼 죠.",
+        "wake": true,
+        "old_crop_text": "이모님 안강 선풍기 꺼 죠."
+      },
+      {
+        "file": "dolswe-slow.wav",
+        "reset_pass": 0,
+        "text": "돌 수야 거실 불 켜줘어.",
+        "wake": true,
+        "old_crop_text": "야 거실 불 켜줘."
+      },
+      {
+        "file": "imonim-slow.wav",
+        "reset_pass": 0,
+        "text": "이모님 안방 선풍기 꺼 주어.",
+        "wake": true,
+        "old_crop_text": "이모님 안방 선풍기 꺼 줘."
+      },
+      {
+        "file": "negative.wav",
+        "reset_pass": 0,
+        "text": "오늘 날씨 가 정말 좋 네요.",
+        "wake": false,
+        "old_crop_text": "늘날 가 정말 좋 네요."
+      },
+      {
+        "file": "negative-dolswe.wav",
+        "reset_pass": 0,
+        "text": "돌 스가 밥 을 먹 었 어요.",
+        "wake": false,
+        "old_crop_text": "스가 밥 을 먹 었 어요."
+      },
+      {
+        "file": "dolswe.wav",
+        "reset_pass": 1,
+        "text": "돌쇠야 거실 불 켜 줘.",
+        "wake": true,
+        "old_crop_text": "거실 불 켜 줘."
+      },
+      {
+        "file": "imonim.wav",
+        "reset_pass": 1,
+        "text": "이모님 안방 선풍기 꺼 죠.",
+        "wake": true,
+        "old_crop_text": "이모님 안강 선풍기 꺼 죠."
+      },
+      {
+        "file": "dolswe-slow.wav",
+        "reset_pass": 1,
+        "text": "돌 수야 거실 불 켜줘어.",
+        "wake": true,
+        "old_crop_text": "야 거실 불 켜줘."
+      },
+      {
+        "file": "imonim-slow.wav",
+        "reset_pass": 1,
+        "text": "이모님 안방 선풍기 꺼 주어.",
+        "wake": true,
+        "old_crop_text": "이모님 안방 선풍기 꺼 줘."
+      },
+      {
+        "file": "negative.wav",
+        "reset_pass": 1,
+        "text": "오늘 날씨 가 정말 좋 네요.",
+        "wake": false,
+        "old_crop_text": "늘날 가 정말 좋 네요."
+      },
+      {
+        "file": "negative-dolswe.wav",
+        "reset_pass": 1,
+        "text": "돌 스가 밥 을 먹 었 어요.",
+        "wake": false,
+        "old_crop_text": "스가 밥 을 먹 었 어요."
+      }
+    ]
+  },
+  "apk_build_signature_install_verified": true,
+  "environment": "Android 37 ARM64 emulator, 16 KB pages; virtual AndroidWifi association",
+  "features": [
+    "exact configured SSID required for speech activation",
+    "GPS/location updates are not requested by active voice path",
+    "real microphone suspends for wrong SSID and actual Wi-Fi disconnect",
+    "real microphone resumes after matching SSID and actual Wi-Fi reconnect",
+    "conversation timeout starts after response; configurable 5..60 seconds",
+    "conversation cleared on cancellation/SSID mismatch",
+    "separate capture and decoder pipeline with bounded utterance queue",
+    "short pause after wake waits for next utterance",
+    "existing HA URL/transport retained"
+  ],
+  "real_galaxy_tested": false,
+  "real_ha_device_control_tested": false,
+  "limitations": [
+    "No real Galaxy end-to-end continuous speech accuracy test",
+    "Voice input during TTS is excluded; speak after reply",
+    "SSID requires Android fine-location permission and device location enabled; no GPS coordinate tracking",
+    "Real-user standalone wake recognition remains model-dependent"
+  ],
+  "sha256": "4ee6a8a69caf60e9502a6ca73d63d69c9ec6befa69c02dcc7c9554739fae9a37"
+}

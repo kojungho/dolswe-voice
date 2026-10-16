@@ -3,6 +3,7 @@ import android.content.*;import android.security.keystore.*;import android.util.
 final class Config {
  final Context ctx;final android.content.SharedPreferences p;
  Config(Context c){ctx=c.getApplicationContext();p=ctx.getSharedPreferences("voice",Context.MODE_PRIVATE);}
+ String ssid(){return p.getString("homeSsid","");}boolean continuous(){return p.getBoolean("continuous",true);}int followSeconds(){return Math.max(5,Math.min(60,p.getInt("followSeconds",20)));}
  String base(){return p.getString("base","");}String label(){return p.getString("label","");}String wakes(){return p.getString("wakes","돌쇠야, 이모님");}boolean dry(){return p.getBoolean("dry",true);}
  private javax.crypto.SecretKey key()throws Exception{KeyStore s=KeyStore.getInstance("AndroidKeyStore");s.load(null);if(!s.containsAlias("voice_token")){KeyGenerator g=KeyGenerator.getInstance("AES","AndroidKeyStore");g.init(new KeyGenParameterSpec.Builder("voice_token",KeyProperties.PURPOSE_ENCRYPT|KeyProperties.PURPOSE_DECRYPT).setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build());g.generateKey();}return (javax.crypto.SecretKey)s.getKey("voice_token",null);}
  String token()throws Exception{String encrypted=p.getString("token","");if(encrypted.isEmpty())return "";String[] v=encrypted.split(":");Cipher c=Cipher.getInstance("AES/GCM/NoPadding");c.init(Cipher.DECRYPT_MODE,key(),new GCMParameterSpec(128,Base64.decode(v[0],Base64.NO_WRAP)));return new String(c.doFinal(Base64.decode(v[1],Base64.NO_WRAP)),"UTF-8");}
