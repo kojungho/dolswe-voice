@@ -4,7 +4,7 @@ import java.util.regex.*;
 import java.text.Normalizer;
 /** Deliberately narrow: no generic service, wildcard, group or script execution. */
 public final class CommandRouter {
- public static final Set<String> DOMAINS=new HashSet<>(Arrays.asList("light","switch","input_boolean","fan","cover","climate","media_player","sensor","binary_sensor","lock"));
+ public static final Set<String> DOMAINS=new HashSet<>(Arrays.asList("light","switch","input_boolean","fan","cover","climate","media_player","sensor","binary_sensor","lock","button"));
  public static String compact(String s){return Normalizer.normalize(s==null?"":s,Normalizer.Form.NFKC).toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}%]","");}
  public static final class Target {
   public final String id,alias,configuredAliases;public final List<String> aliases;
@@ -14,7 +14,7 @@ public final class CommandRouter {
  private static Set<String> names(Target target){Set<String> out=new LinkedHashSet<>();for(String alias:target.aliases){String name=compact(alias);if(name.length()<2)continue;out.add(name);String domain=target.domain();boolean lighting=domain.equals("light")||((domain.equals("switch")||domain.equals("input_boolean"))&&name.matches(".+(?:전등|조명|불|등)$"));if(lighting){String base=name.replaceFirst("(?:전등|조명|불|등)$","");if(!base.isEmpty())for(String suffix:new String[]{"불","등","전등","조명"})out.add(base+suffix);}}return out;}
  public static final class Plan {public final Target target;public final String service;public final Map<String,Object> data=new LinkedHashMap<>();Plan(Target t,String s){target=t;service=s;data.put("entity_id",t.id);}public boolean query(){return service.isEmpty();}}
  public static String validateAliases(List<Target> list){Map<String,String> owners=new HashMap<>();for(Target target:list){if(!target.configuredAliases.trim().isEmpty()&&target.aliases.isEmpty())return "쉼표 사이에 부를 이름을 입력해주세요.";if(target.aliases.size()>8)return "한 장치의 별칭은 8개까지 입력해주세요.";for(String alias:target.aliases){if(compact(alias).length()<2||alias.length()>40)return "별칭은 각각 2~40글자로 입력해주세요.";}for(String name:names(target)){String previous=owners.put(name,target.id);if(previous!=null&&!previous.equals(target.id))return "별칭 또는 불·등·조명으로 바꿔 부르는 이름이 겹칩니다: "+name+". 장치 이름을 더 구체적으로 입력해주세요.";}}return "";}
- public static String describe(Plan plan){switch(plan.service){case "":return "상태 조회";case "lock":return "잠금";case "unlock":return "잠금 해제";case "open_cover":return "열기";case "close_cover":return "닫기";case "stop_cover":return "중지";case "turn_on":return "켜기";case "turn_off":return "끄기";default:return "설정 변경";}}
+ public static String describe(Plan plan){switch(plan.service){case "":return "상태 조회";case "press":return "버튼 누르기";case "lock":return "잠금";case "unlock":return "잠금 해제";case "open_cover":return "열기";case "close_cover":return "닫기";case "stop_cover":return "중지";case "turn_on":return "켜기";case "turn_off":return "끄기";default:return "설정 변경";}}
  public static Plan plan(String text,List<Target> targets){
   String s=compact(text);if(s.isEmpty())throw new IllegalArgumentException("명령을 다시 말씀해주세요.");
   if(s.matches(".*(하지마|하지말|켜지마|켜지말|끄지마|끄지말|열지마|열지말|닫지마|닫지말|안켜|안꺼|안열|안닫|잠그지마|잠그지말|잠가주지마|풀지마|풀지말|안잠가|안풀어|취소).*"))throw new IllegalArgumentException("취소했어요.");
@@ -24,6 +24,10 @@ public final class CommandRouter {
   rest=rest.replaceFirst("^(으로|에서|에게|은|는|이|가|을|를)","").replaceFirst("^(좀|한번만|한번)","");String d=t.domain();
   if(!DOMAINS.contains(d))throw new IllegalArgumentException("지원하지 않는 장치 종류입니다.");
   if(rest.matches("(상태|상태알려줘|상태알려주세요|어때|온도|온도알려줘|습도|습도알려줘|확인|확인해줘|몇도야|몇도|켜져있어|꺼져있어|열려있어|닫혀있어)[요까]*"))return new Plan(t,"");
+  if(d.equals("button")){
+   if(rest.matches("(?:버튼)?(눌러|눌러줘|눌러주세요|누르기|누름|누르세요|실행|실행해|실행해줘|실행해주세요|작동|작동시켜줘)[요]*"))return new Plan(t,"press");
+   throw new IllegalArgumentException("버튼은 눌러줘, 실행해줘, 상태 알려줘로 말씀해주세요.");
+  }
   if(d.equals("lock")){
    if(rest.matches("(잠금상태|잠금상태알려줘|잠금상태알려주세요|잠겼어|잠겨있어|잠겨있니|잠겼니|잠금해제됐어)[요까]*"))return new Plan(t,"");
    if(rest.matches("(잠가|잠가줘|잠가주세요|잠궈|잠궈줘|잠궈주세요|잠금|잠금해줘|잠금설정|잠금설정해줘|켜|켜줘|켜주세요|전원켜|전원켜줘|닫아|닫아줘|닫아주세요)[요]*"))return new Plan(t,"lock");

@@ -1,0 +1,24 @@
+{
+  "version": "1.1.5",
+  "button_checks": 49,
+  "existing_core_checks": 201,
+  "total_checks": 250,
+  "button_service": "button.press",
+  "checked": [
+    "label-filtered discovery",
+    "alias and connected wake/command routing",
+    "Korean press and execute commands",
+    "never-pressed unknown state can press",
+    "unavailable rejected",
+    "dry run sends no press",
+    "one press POST for one command",
+    "last press state query sends no press",
+    "cancellation and mixed commands rejected",
+    "home and label gating",
+    "groups rejected",
+    "button non-press service rejected"
+  ],
+  "apk_build_and_signature_verified": true,
+  "real_ha_button_pressed": false,
+  "sha256": "03202012c9d7b99194d35de8780440bb7a14c6e92290b1903b7fe79a48e428e1"
+}
