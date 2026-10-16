@@ -4,20 +4,26 @@ import java.util.regex.*;
 import java.text.Normalizer;
 /** Deliberately narrow: no generic service, wildcard, group or script execution. */
 public final class CommandRouter {
- public static final Set<String> DOMAINS=new HashSet<>(Arrays.asList("light","switch","input_boolean","fan","cover","climate","media_player","sensor","binary_sensor"));
+ public static final Set<String> DOMAINS=new HashSet<>(Arrays.asList("light","switch","input_boolean","fan","cover","climate","media_player","sensor","binary_sensor","lock"));
  public static String compact(String s){return Normalizer.normalize(s==null?"":s,Normalizer.Form.NFKC).toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}%]","");}
  public static final class Target {public final String id,alias;public Target(String id,String alias){this.id=id;this.alias=alias;}public String domain(){return id.split("\\.")[0];}}
  public static final class Plan {public final Target target;public final String service;public final Map<String,Object> data=new LinkedHashMap<>();Plan(Target t,String s){target=t;service=s;data.put("entity_id",t.id);}public boolean query(){return service.isEmpty();}}
  public static String validateAliases(List<Target> list){Set<String> names=new HashSet<>();for(Target t:list){String n=compact(t.alias);if(n.isEmpty())continue;if(n.length()<2)return "별칭은 두 글자 이상 입력해주세요.";if(!names.add(n))return "같은 별칭을 두 장치에 사용할 수 없습니다: "+t.alias;}return "";}
  public static Plan plan(String text,List<Target> targets){
   String s=compact(text);if(s.isEmpty())throw new IllegalArgumentException("명령을 다시 말씀해주세요.");
-  if(s.matches(".*(하지마|하지말|켜지마|켜지말|끄지마|끄지말|열지마|열지말|닫지마|닫지말|안켜|안꺼|안열|안닫|취소).*"))throw new IllegalArgumentException("취소했어요.");
+  if(s.matches(".*(하지마|하지말|켜지마|켜지말|끄지마|끄지말|열지마|열지말|닫지마|닫지말|안켜|안꺼|안열|안닫|잠그지마|잠그지말|잠가주지마|풀지마|풀지말|안잠가|안풀어|취소).*"))throw new IllegalArgumentException("취소했어요.");
   List<Target> matches=new ArrayList<>();int longest=0;for(Target t:targets){String name=compact(t.alias);if(name.length()<2)continue;if(s.startsWith(name)){if(name.length()>longest){matches.clear();longest=name.length();}if(name.length()==longest)matches.add(t);}}
   if(matches.size()!=1)throw new IllegalArgumentException(matches.isEmpty()?"등록한 장치 별칭을 먼저 말씀해주세요.":"별칭이 겹칩니다. 장치 이름을 다르게 설정해주세요.");
   Target t=matches.get(0);String rest=s.substring(longest);for(Target other:targets)if(!other.id.equals(t.id)&&compact(other.alias).length()>1&&rest.contains(compact(other.alias)))throw new IllegalArgumentException("한 번에 한 장치씩 말씀해주세요.");
   rest=rest.replaceFirst("^(으로|에서|에게|은|는|이|가|을|를)","");String d=t.domain();
   if(!DOMAINS.contains(d))throw new IllegalArgumentException("지원하지 않는 장치 종류입니다.");
   if(rest.matches("(상태|상태알려줘|상태알려주세요|어때|온도|온도알려줘|습도|습도알려줘|확인|확인해줘|몇도야|몇도|켜져있어|꺼져있어|열려있어|닫혀있어)[요까]*"))return new Plan(t,"");
+  if(d.equals("lock")){
+   if(rest.matches("(잠금상태|잠금상태알려줘|잠금상태알려주세요|잠겼어|잠겨있어|잠겨있니|잠겼니|잠금해제됐어)[요까]*"))return new Plan(t,"");
+   if(rest.matches("(잠가|잠가줘|잠가주세요|잠궈|잠궈줘|잠궈주세요|잠금|잠금해줘|잠금설정|잠금설정해줘)[요]*"))return new Plan(t,"lock");
+   if(rest.matches("(잠금해제|잠금해제해줘|잠금해제해|잠금해제해주세요|잠금풀어|잠금풀어줘|잠금풀어주세요|풀어|풀어줘|풀어주세요|열어|열어줘|열어주세요)[요]*"))return new Plan(t,"unlock");
+   throw new IllegalArgumentException("도어록은 잠가줘, 잠금 해제해줘, 상태 알려줘로 말씀해주세요.");
+  }
   boolean on=rest.matches("(켜|켜줘|켜주세요|켜라|켜줄래|켜주어|켜죠|작동|작동시켜줘|전원켜|전원켜줘|전원켜주세요)[요]*"),off=rest.matches("(꺼|꺼줘|꺼주세요|꺼라|꺼줄래|꺼주어|꺼죠|전원꺼|전원꺼줘|전원꺼주세요)[요]*");
   if(on||off){if(Arrays.asList("light","switch","input_boolean","fan","climate","media_player").contains(d))return new Plan(t,on?"turn_on":"turn_off");}
   if(d.equals("cover")){if(rest.matches("(열어|열어줘|열어주세요|올려|올려줘)[요]*"))return new Plan(t,"open_cover");if(rest.matches("(닫아|닫아줘|닫아주세요|내려|내려줘)[요]*"))return new Plan(t,"close_cover");if(rest.matches("(멈춰|멈춰줘|정지)[요]*"))return new Plan(t,"stop_cover");}

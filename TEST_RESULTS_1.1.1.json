@@ -1,0 +1,11 @@
+{
+  "version": "1.1.1",
+  "core_tests_passed": 36,
+  "home_update_tests_passed": 28,
+  "lock_tests_passed": 49,
+  "android_keystore_tests_passed": 12,
+  "android_output": "ANDROID_LOCK_CONFIG_OK 12 checks: Keystore encryption, leading zeros, empty preserves, replacement, deletion, atomic validation\n",
+  "real_door_lock_actions_performed": false,
+  "emulator_install_passed": true,
+  "sha256": "a84e3c0a13d0f5c80b6c55bb14a40abc907fe0828a407d0bb3f2bed81a696339"
+}
