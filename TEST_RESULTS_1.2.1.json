@@ -1,0 +1,28 @@
+{
+  "version": "1.2.1",
+  "versionCode": 12,
+  "existing_jvm_checks": 286,
+  "quiet_hours_jvm_checks": 34,
+  "jvm_total": 320,
+  "android_gate_checks": 18,
+  "android_output": "ANDROID_WIFI_OK 18 checks; actual SSID=AndroidWifi; real microphone start/suspend/resume/stop; quiet-hours stop/start-denial/resume and stopped-service alarm; no HA service calls",
+  "apk_build_signature_install_verified": true,
+  "real_galaxy_tested": false,
+  "real_ha_device_control_tested": false,
+  "tests": [
+    "overnight and same-day start/end boundaries",
+    "all 1440 local-clock minutes for duration checks",
+    "disabled, invalid and equal start/end schedules",
+    "local time-zone and DST next-boundary scheduling",
+    "real microphone stops during quiet-hours config",
+    "manual start during quiet hours does not open microphone",
+    "private schedule receiver resumes existing service after schedule is unblocked",
+    "alarm does not start a stopped service",
+    "existing Wi-Fi disconnect/reconnect microphone lifecycle"
+  ],
+  "limits": [
+    "Android schedule lifecycle test changes configuration and invokes receiver; it does not wait through an entire night or verify Doze alarm precision",
+    "Inexact idle alarm may delay resumption; no exact-alarm special permission requested"
+  ],
+  "sha256": "f1f13744ac57140e09a3eb4a18e114ab412cc9e090396f555d07c025d18032c8"
+}

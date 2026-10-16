@@ -3,6 +3,7 @@ import android.content.*;import android.security.keystore.*;import android.util.
 final class Config {
  final Context ctx;final android.content.SharedPreferences p;
  Config(Context c){ctx=c.getApplicationContext();p=ctx.getSharedPreferences("voice",Context.MODE_PRIVATE);}
+ boolean quietEnabled(){return p.getBoolean("quietEnabled",false);}int quietStart(){return p.getInt("quietStart",22*60);}int quietEnd(){return p.getInt("quietEnd",7*60);}boolean quietNow(){return QuietHours.active(quietEnabled(),quietStart(),quietEnd(),QuietHours.minute());}
  String ssid(){return p.getString("homeSsid","");}boolean continuous(){return p.getBoolean("continuous",true);}int followSeconds(){return Math.max(5,Math.min(60,p.getInt("followSeconds",20)));}
  String base(){return p.getString("base","");}String label(){return p.getString("label","");}String wakes(){return p.getString("wakes","돌쇠야, 이모님");}boolean dry(){return p.getBoolean("dry",true);}
  private javax.crypto.SecretKey key()throws Exception{KeyStore s=KeyStore.getInstance("AndroidKeyStore");s.load(null);if(!s.containsAlias("voice_token")){KeyGenerator g=KeyGenerator.getInstance("AES","AndroidKeyStore");g.init(new KeyGenParameterSpec.Builder("voice_token",KeyProperties.PURPOSE_ENCRYPT|KeyProperties.PURPOSE_DECRYPT).setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build());g.generateKey();}return (javax.crypto.SecretKey)s.getKey("voice_token",null);}
