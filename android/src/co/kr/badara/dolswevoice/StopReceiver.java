@@ -1,0 +1,1 @@
+package co.kr.badara.dolswevoice;import android.content.*;public final class StopReceiver extends BroadcastReceiver {public void onReceive(Context c,Intent i){c.stopService(new Intent(c,VoiceService.class));}}

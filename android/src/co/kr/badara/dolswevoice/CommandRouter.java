@@ -1,0 +1,36 @@
+package co.kr.badara.dolswevoice;
+import java.util.*;
+import java.util.regex.*;
+import java.text.Normalizer;
+/** Deliberately narrow: no generic service, wildcard, group or script execution. */
+public final class CommandRouter {
+ public static final Set<String> DOMAINS=new HashSet<>(Arrays.asList("light","switch","input_boolean","fan","cover","climate","media_player","sensor","binary_sensor"));
+ public static String compact(String s){return Normalizer.normalize(s==null?"":s,Normalizer.Form.NFKC).toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}%]","");}
+ public static final class Target {public final String id,alias;public Target(String id,String alias){this.id=id;this.alias=alias;}public String domain(){return id.split("\\.")[0];}}
+ public static final class Plan {public final Target target;public final String service;public final Map<String,Object> data=new LinkedHashMap<>();Plan(Target t,String s){target=t;service=s;data.put("entity_id",t.id);}public boolean query(){return service.isEmpty();}}
+ public static String validateAliases(List<Target> list){Set<String> names=new HashSet<>();for(Target t:list){String n=compact(t.alias);if(n.isEmpty())continue;if(n.length()<2)return "별칭은 두 글자 이상 입력해주세요.";if(!names.add(n))return "같은 별칭을 두 장치에 사용할 수 없습니다: "+t.alias;}return "";}
+ public static Plan plan(String text,List<Target> targets){
+  String s=compact(text);if(s.isEmpty())throw new IllegalArgumentException("명령을 다시 말씀해주세요.");
+  if(s.matches(".*(하지마|하지말|켜지마|켜지말|끄지마|끄지말|열지마|열지말|닫지마|닫지말|안켜|안꺼|안열|안닫|취소).*"))throw new IllegalArgumentException("취소했어요.");
+  List<Target> matches=new ArrayList<>();int longest=0;for(Target t:targets){String name=compact(t.alias);if(name.length()<2)continue;if(s.startsWith(name)){if(name.length()>longest){matches.clear();longest=name.length();}if(name.length()==longest)matches.add(t);}}
+  if(matches.size()!=1)throw new IllegalArgumentException(matches.isEmpty()?"등록한 장치 별칭을 먼저 말씀해주세요.":"별칭이 겹칩니다. 장치 이름을 다르게 설정해주세요.");
+  Target t=matches.get(0);String rest=s.substring(longest);for(Target other:targets)if(!other.id.equals(t.id)&&compact(other.alias).length()>1&&rest.contains(compact(other.alias)))throw new IllegalArgumentException("한 번에 한 장치씩 말씀해주세요.");
+  rest=rest.replaceFirst("^(으로|에서|에게|은|는|이|가|을|를)","");String d=t.domain();
+  if(!DOMAINS.contains(d))throw new IllegalArgumentException("지원하지 않는 장치 종류입니다.");
+  if(rest.matches("(상태|상태알려줘|상태알려주세요|어때|온도|온도알려줘|습도|습도알려줘|확인|확인해줘|몇도야|몇도|켜져있어|꺼져있어|열려있어|닫혀있어)[요까]*"))return new Plan(t,"");
+  boolean on=rest.matches("(켜|켜줘|켜주세요|켜라|켜줄래|켜주어|켜죠|작동|작동시켜줘|전원켜|전원켜줘|전원켜주세요)[요]*"),off=rest.matches("(꺼|꺼줘|꺼주세요|꺼라|꺼줄래|꺼주어|꺼죠|전원꺼|전원꺼줘|전원꺼주세요)[요]*");
+  if(on||off){if(Arrays.asList("light","switch","input_boolean","fan","climate","media_player").contains(d))return new Plan(t,on?"turn_on":"turn_off");}
+  if(d.equals("cover")){if(rest.matches("(열어|열어줘|열어주세요|올려|올려줘)[요]*"))return new Plan(t,"open_cover");if(rest.matches("(닫아|닫아줘|닫아주세요|내려|내려줘)[요]*"))return new Plan(t,"close_cover");if(rest.matches("(멈춰|멈춰줘|정지)[요]*"))return new Plan(t,"stop_cover");}
+  Matcher percent=Pattern.compile("(?:밝기|속도|볼륨|음량|위치)?(\\d{1,3})(?:퍼센트|프로|퍼|%)(?:로)?(?:설정|맞춰|맞춰줘|해줘|해|설정해줘|설정해)?(?:요)?").matcher(rest);
+  if(percent.matches()){int n=Integer.parseInt(percent.group(1));if(n<0||n>100)throw new IllegalArgumentException("0에서 100퍼센트로 말씀해주세요.");Plan p;
+   if(d.equals("light")){p=new Plan(t,"turn_on");p.data.put("brightness_pct",n);}else if(d.equals("fan")){p=new Plan(t,"set_percentage");p.data.put("percentage",n);}else if(d.equals("media_player")){p=new Plan(t,"volume_set");p.data.put("volume_level",n/100.0);}else if(d.equals("cover")){p=new Plan(t,"set_cover_position");p.data.put("position",n);}else throw new IllegalArgumentException("이 장치는 퍼센트 설정을 지원하지 않아요.");return p;}
+  Matcher temp=Pattern.compile("(?:온도)?(\\d{1,2})(?:도)(?:로)?(?:설정|맞춰|맞춰줘|해줘|해|설정해줘)?(?:요)?").matcher(rest);
+  if(d.equals("climate")&&temp.matches()){int n=Integer.parseInt(temp.group(1));if(n<10||n>35)throw new IllegalArgumentException("온도는 10도에서 35도로 말씀해주세요.");Plan p=new Plan(t,"set_temperature");p.data.put("temperature",n);return p;}
+  throw new IllegalArgumentException("별칭 뒤에 켜줘, 꺼줘, 상태 알려줘처럼 말씀해주세요.");
+ }
+ public static final class Wake {public final boolean matched;public final String remaining;Wake(boolean m,String s){matched=m;remaining=s;}}
+ public static Wake wake(String text,String words){return wake(text,words,true);}
+ private static int initial(int n){int l=n/588;return l==1?0:l==4?3:l==8?7:l==10?9:l==13?12:l;}
+ private static boolean near(String a,String b){if(a.length()!=b.length()||a.length()<3)return false;int vowels=0;for(int i=0;i<a.length();i++){int x=a.charAt(i)-0xac00,y=b.charAt(i)-0xac00;if(x<0||x>=11172||y<0||y>=11172||initial(x)!=initial(y)||x%28!=y%28)return false;if((x%588)/28!=(y%588)/28)vowels++;}return vowels<=1;}
+ public static Wake wake(String text,String words,boolean tolerate){String n=compact(text);String best="";for(String word:words.split("[,，\\n]")){String w=compact(word);if(w.length()<2||w.length()<=best.length()||n.length()<w.length())continue;if(n.startsWith(w)||(tolerate&&near(n.substring(0,w.length()),w)))best=w;}return new Wake(!best.isEmpty(),best.isEmpty()?n:n.substring(best.length()));}
+}

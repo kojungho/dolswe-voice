@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "package": "co.kr.badara.dolswevoice",
+  "core_checks_passed": 36,
+  "native_wake_positive_cases": 4,
+  "native_wake_negative_cases": 2,
+  "vad_passed": true,
+  "environment": "Android 37 ARM64 emulator, 16 KB pages",
+  "real_galaxy_tested": false,
+  "real_ha_device_control_tested": false,
+  "native_output": "NATIVE_OK [{\"file\":\"dolswe.wav\",\"text\":\"돌쇠야 것 불 켜 줘.\",\"wake\":true,\"decode_ms\":57},{\"file\":\"imonim.wav\",\"text\":\"이모님 안강 선풍기 꺼 죠.\",\"wake\":true,\"decode_ms\":61},{\"file\":\"dolswe-slow.wav\",\"text\":\"돌써야 거실 불 켜줘.\",\"wake\":true,\"decode_ms\":65},{\"file\":\"imonim-slow.wav\",\"text\":\"이모님 안방 선풍기 꺼 주어.\",\"wake\":true,\"decode_ms\":70},{\"file\":\"negative.wav\",\"text\":\"오늘 날씨 가 정말 좋 네요.\",\"wake\":false,\"decode_ms\":53},{\"file\":\"negative-dolswe.wav\",\"text\":\"돌 스가 밥 을 먹 었 어요.\",\"wake\":false,\"decode_ms\":47}] total_ms=2083\n"
+}

@@ -1,0 +1,33 @@
+package co.kr.badara.dolswevoice;
+import android.app.*;import android.content.*;import android.media.*;import android.os.*;import android.speech.tts.*;import java.util.*;import java.util.concurrent.*;import com.k2fsa.sherpa.onnx.*;
+public final class VoiceService extends Service {
+ public static final String EVENT="co.kr.badara.dolswevoice.STATUS";public static volatile boolean running=false;public static volatile String status="대기 중지";
+ private volatile boolean active=false,speaking=false,ttsReady=false;private volatile long armedUntil=0;private volatile String mode="wake";private Thread worker;private AudioRecord mic;private TextToSpeech tts;private PowerManager.WakeLock wakeLock;private Config cfg;private final Handler main=new Handler(Looper.getMainLooper());
+ public android.os.IBinder onBind(Intent i){return null;}
+ public void onCreate(){super.onCreate();cfg=new Config(this);NotificationManager nm=getSystemService(NotificationManager.class);nm.createNotificationChannel(new NotificationChannel("voice","음성 호출 대기",NotificationManager.IMPORTANCE_LOW));
+  tts=new TextToSpeech(this,result->{if(result==TextToSpeech.SUCCESS){tts.setLanguage(Locale.KOREAN);Set<Voice> voices=tts.getVoices();if(voices!=null)for(Voice v:voices)if(v.getLocale().getLanguage().equals("ko")&&!v.isNetworkConnectionRequired()&&(v.getFeatures()==null||!v.getFeatures().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED))){tts.setVoice(v);ttsReady=true;break;}}});
+  tts.setOnUtteranceProgressListener(new UtteranceProgressListener(){public void onStart(String id){speaking=true;}public void onDone(String id){speaking=false;}public void onError(String id){speaking=false;}});
+ }
+ public int onStartCommand(Intent i,int flags,int startId){mode=i==null?"wake":i.getStringExtra("mode");if(mode==null)mode="wake";if(mode.equals("command"))armedUntil=SystemClock.elapsedRealtime()+20000;
+  try{startForeground(41,notification("모델 준비 중…"),android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);}catch(Exception e){publish("마이크 권한을 확인하고 앱에서 다시 시작해주세요.");stopSelf();return START_NOT_STICKY;}
+  if(active){publish(mode.equals("test")?"호출어 테스트: 말씀해주세요.":mode.equals("command")?"명령을 말씀해주세요.":"호출 대기 중");return START_NOT_STICKY;}
+  active=true;running=true;wakeLock=((PowerManager)getSystemService(POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"dolswe:voice");wakeLock.acquire();worker=new Thread(this::listen,"voice-audio");worker.start();return START_NOT_STICKY;
+ }
+ private Notification notification(String text){PendingIntent open=PendingIntent.getActivity(this,0,new Intent(this,MainActivity.class),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);PendingIntent stop=PendingIntent.getBroadcast(this,1,new Intent(this,StopReceiver.class),PendingIntent.FLAG_IMMUTABLE);return new Notification.Builder(this,"voice").setSmallIcon(co.kr.badara.dolswevoice.R.drawable.voice_icon).setContentTitle("돌쇠 음성비서").setContentText(text).setContentIntent(open).setOngoing(true).addAction(new Notification.Action.Builder(null,"중지",stop).build()).build();}
+ private void publish(String text){status=text;cfg.last(text);sendBroadcast(new Intent(EVENT).setPackage(getPackageName()).putExtra("text",text));getSystemService(NotificationManager.class).notify(41,notification(text));}
+ private void speak(String text){publish(text);if(!ttsReady)return;speaking=true;tts.speak(text,TextToSpeech.QUEUE_FLUSH,null,"reply");long deadline=SystemClock.elapsedRealtime()+15000;while(active&&speaking&&SystemClock.elapsedRealtime()<deadline){try{Thread.sleep(30);}catch(InterruptedException e){break;}}speaking=false;}
+ private void listen(){SpeechEngine engine=null;Vad vad=null;try{
+   engine=new SpeechEngine(getAssets());vad=SpeechEngine.createVad(getAssets());
+   if(!active)return;int minimum=AudioRecord.getMinBufferSize(16000,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT);mic=new AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION,16000,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT,Math.max(minimum,64000));if(mic.getState()!=AudioRecord.STATE_INITIALIZED)throw new Exception("마이크를 초기화할 수 없어요.");mic.startRecording();if(mode.equals("command"))armedUntil=SystemClock.elapsedRealtime()+20000;publish(mode.equals("test")?"호출어 테스트: 돌쇠야 또는 이모님이라고 불러주세요.":mode.equals("command")?"명령을 말씀해주세요.":"호출 대기 중 · "+cfg.wakes());
+   short[] pcm=new short[512];while(active){int n=mic.read(pcm,0,pcm.length,AudioRecord.READ_BLOCKING);if(n<0)throw new Exception("마이크를 다른 앱에서 사용하는지 확인해주세요.");if(n==0)continue;float[] samples=new float[n];for(int k=0;k<n;k++)samples[k]=pcm[k]/32768f;vad.acceptWaveform(samples);
+    if(vad.empty())continue;float[] speech=vad.front().getSamples();vad.pop();if(speech.length<3200)continue;String text=engine.recognize(speech);if(!active)break;if(text.isEmpty())continue;
+    CommandRouter.Wake wake=CommandRouter.wake(text,cfg.wakes(),cfg.p.getBoolean("nearWake",true));if(mode.equals("test")){speak("인식: "+text+". "+(wake.matched?"호출어가 일치해요.":"설정된 호출어와 달라요."));}
+    else if(wake.matched||SystemClock.elapsedRealtime()<armedUntil){String command=wake.matched?wake.remaining:text;if(command.isEmpty()){speak("네, 말씀하세요.");armedUntil=SystemClock.elapsedRealtime()+10000;}
+     else{armedUntil=0;try{List<CommandRouter.Target> targets=cfg.targets();String invalid=CommandRouter.validateAliases(targets);if(!invalid.isEmpty())throw new Exception(invalid);CommandRouter.Plan plan=CommandRouter.plan(command,targets);speak(cfg.client().execute(cfg.label(),plan,cfg.dry()));}catch(Exception e){speak(message(e));}if(mode.equals("command")){mode="wake";}}
+    }else{publish("호출 대기 중 · "+cfg.wakes());}
+    if(active){mic.stop();vad.reset();mic.startRecording();}
+   }
+  }catch(Throwable e){if(active)publish("중지됨 · "+message(e));}finally{active=false;running=false;if(mic!=null){try{mic.stop();}catch(Exception ignored){}mic.release();mic=null;}if(vad!=null)vad.release();if(engine!=null)engine.close();main.post(()->stopSelf());}}
+ public static String message(Throwable e){String s=e.getMessage();return s==null||s.trim().isEmpty()?"작업을 완료하지 못했어요. 연결과 권한을 확인해주세요.":s;}
+ public void onDestroy(){active=false;running=false;if(mic!=null)try{mic.stop();}catch(Exception ignored){}if(tts!=null){tts.stop();tts.shutdown();}if(wakeLock!=null&&wakeLock.isHeld())wakeLock.release();stopForeground(STOP_FOREGROUND_REMOVE);status="대기 중지";sendBroadcast(new Intent(EVENT).setPackage(getPackageName()).putExtra("text",status));super.onDestroy();}
+}
