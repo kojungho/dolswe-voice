@@ -18,5 +18,5 @@ cp "$deps/native/jni/arm64-v8a/"*.so "$build_dir/native/lib/arm64-v8a/"
 (cd "$build_dir/dex" && zip -q "$build_dir/unsigned.apk" classes*.dex)
 (cd "$build_dir/native" && zip -qr "$build_dir/unsigned.apk" lib)
 "$bt/zipalign" -P 16 -f 4 "$build_dir/unsigned.apk" "$build_dir/aligned.apk"
-"$bt/apksigner" sign --ks "${VOICE_KEYSTORE:?}" --ks-key-alias dolswe-voice --ks-pass env:VOICE_STOREPASS --key-pass env:VOICE_STOREPASS --out "$build_dir/dolswe-voice.apk" "$build_dir/aligned.apk"
+"$bt/apksigner" sign --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --ks "${VOICE_KEYSTORE:?}" --ks-key-alias dolswe-voice --ks-pass env:VOICE_STOREPASS --key-pass env:VOICE_STOREPASS --out "$build_dir/dolswe-voice.apk" "$build_dir/aligned.apk"
 "$bt/apksigner" verify --verbose "$build_dir/dolswe-voice.apk"

@@ -1,0 +1,13 @@
+{
+  "version": "1.0.3",
+  "signature_checks": [
+    "v1 API23 verification passed",
+    "v2 API24-27 verification passed",
+    "v3 API29+ verification passed"
+  ],
+  "apk_zip_integrity": true,
+  "emulator_install": "adb install -r --no-incremental: Success",
+  "real_s25_ultra_tested": false,
+  "reported_install_failure_root_cause_confirmed": false,
+  "sha256": "a6aee59d5f2e2cac339b902fce037f4a724b38b9ff7a794e1507253c6b46c436"
+}
