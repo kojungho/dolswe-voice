@@ -1,0 +1,11 @@
+{
+  "version": "1.1.2",
+  "core_checks": 36,
+  "home_update_checks": 28,
+  "lock_checks": 47,
+  "short_command_checks": 34,
+  "apk_signature_verified": true,
+  "real_device_actions_performed": false,
+  "android_install_tested_this_version": false,
+  "sha256": "28e8d1362473631081cfd5492a90cde5d630d0f53df2b7f88c73f813e7683939"
+}

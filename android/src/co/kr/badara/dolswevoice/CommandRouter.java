@@ -20,13 +20,13 @@ public final class CommandRouter {
   if(rest.matches("(상태|상태알려줘|상태알려주세요|어때|온도|온도알려줘|습도|습도알려줘|확인|확인해줘|몇도야|몇도|켜져있어|꺼져있어|열려있어|닫혀있어)[요까]*"))return new Plan(t,"");
   if(d.equals("lock")){
    if(rest.matches("(잠금상태|잠금상태알려줘|잠금상태알려주세요|잠겼어|잠겨있어|잠겨있니|잠겼니|잠금해제됐어)[요까]*"))return new Plan(t,"");
-   if(rest.matches("(잠가|잠가줘|잠가주세요|잠궈|잠궈줘|잠궈주세요|잠금|잠금해줘|잠금설정|잠금설정해줘)[요]*"))return new Plan(t,"lock");
-   if(rest.matches("(잠금해제|잠금해제해줘|잠금해제해|잠금해제해주세요|잠금풀어|잠금풀어줘|잠금풀어주세요|풀어|풀어줘|풀어주세요|열어|열어줘|열어주세요)[요]*"))return new Plan(t,"unlock");
-   throw new IllegalArgumentException("도어록은 잠가줘, 잠금 해제해줘, 상태 알려줘로 말씀해주세요.");
+   if(rest.matches("(잠가|잠가줘|잠가주세요|잠궈|잠궈줘|잠궈주세요|잠금|잠금해줘|잠금설정|잠금설정해줘|켜|켜줘|켜주세요|전원켜|전원켜줘|닫아|닫아줘|닫아주세요)[요]*"))return new Plan(t,"lock");
+   if(rest.matches("(잠금해제|잠금해제해줘|잠금해제해|잠금해제해주세요|잠금풀어|잠금풀어줘|잠금풀어주세요|풀어|풀어줘|풀어주세요|열어|열어줘|열어주세요|꺼|꺼줘|꺼주세요|전원꺼|전원꺼줘)[요]*"))return new Plan(t,"unlock");
+   throw new IllegalArgumentException("도어록은 켜·닫아·잠가줘, 꺼·열어·잠금 해제해줘, 상태 알려줘로 말씀해주세요.");
   }
   boolean on=rest.matches("(켜|켜줘|켜주세요|켜라|켜줄래|켜주어|켜죠|작동|작동시켜줘|전원켜|전원켜줘|전원켜주세요)[요]*"),off=rest.matches("(꺼|꺼줘|꺼주세요|꺼라|꺼줄래|꺼주어|꺼죠|전원꺼|전원꺼줘|전원꺼주세요)[요]*");
   if(on||off){if(Arrays.asList("light","switch","input_boolean","fan","climate","media_player").contains(d))return new Plan(t,on?"turn_on":"turn_off");}
-  if(d.equals("cover")){if(rest.matches("(열어|열어줘|열어주세요|올려|올려줘)[요]*"))return new Plan(t,"open_cover");if(rest.matches("(닫아|닫아줘|닫아주세요|내려|내려줘)[요]*"))return new Plan(t,"close_cover");if(rest.matches("(멈춰|멈춰줘|정지)[요]*"))return new Plan(t,"stop_cover");}
+  if(d.equals("cover")){if(on)return new Plan(t,"open_cover");if(off)return new Plan(t,"close_cover");if(rest.matches("(열어|열어줘|열어주세요|올려|올려줘)[요]*"))return new Plan(t,"open_cover");if(rest.matches("(닫아|닫아줘|닫아주세요|내려|내려줘)[요]*"))return new Plan(t,"close_cover");if(rest.matches("(멈춰|멈춰줘|정지)[요]*"))return new Plan(t,"stop_cover");}
   Matcher percent=Pattern.compile("(?:밝기|속도|볼륨|음량|위치)?(\\d{1,3})(?:퍼센트|프로|퍼|%)(?:로)?(?:설정|맞춰|맞춰줘|해줘|해|설정해줘|설정해)?(?:요)?").matcher(rest);
   if(percent.matches()){int n=Integer.parseInt(percent.group(1));if(n<0||n>100)throw new IllegalArgumentException("0에서 100퍼센트로 말씀해주세요.");Plan p;
    if(d.equals("light")){p=new Plan(t,"turn_on");p.data.put("brightness_pct",n);}else if(d.equals("fan")){p=new Plan(t,"set_percentage");p.data.put("percentage",n);}else if(d.equals("media_player")){p=new Plan(t,"volume_set");p.data.put("volume_level",n/100.0);}else if(d.equals("cover")){p=new Plan(t,"set_cover_position");p.data.put("position",n);}else throw new IllegalArgumentException("이 장치는 퍼센트 설정을 지원하지 않아요.");return p;}
